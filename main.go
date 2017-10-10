@@ -2,10 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"strconv"
-	"time"
+	"log"
 
 	"github.com/gorilla/mux"
 	"github.com/iced-mocha/shared/models"
@@ -18,6 +16,13 @@ func main() {
 }
 
 func GetPosts(w http.ResponseWriter, r *http.Request) {
+	posts := make([]models.Post, 20)
+	posts = append(posts, models.Post{})
+	res, err := json.Marshal(posts)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(nil)
+	w.Write(res)
 }

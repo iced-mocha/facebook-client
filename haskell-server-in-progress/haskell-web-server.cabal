@@ -25,4 +25,5 @@ executable haskell-web-server
                        bytestring,
                        http-client-tls,
                        http-types,
-                       mtl
+                       mtl,
+                       unordered-containers
