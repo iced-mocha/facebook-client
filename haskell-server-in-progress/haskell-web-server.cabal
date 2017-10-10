@@ -24,4 +24,5 @@ executable haskell-web-server
                        http-conduit,
                        bytestring,
                        http-client-tls,
-                       http-types
+                       http-types,
+                       mtl

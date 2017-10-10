@@ -29,12 +29,12 @@ version :: Version
 version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "/home/jacob/github/haskell-web-server/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/bin"
-libdir     = "/home/jacob/github/haskell-web-server/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/lib/x86_64-linux-ghc-8.0.2/haskell-web-server-0.1.0.0"
-dynlibdir  = "/home/jacob/github/haskell-web-server/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/lib/x86_64-linux-ghc-8.0.2"
-datadir    = "/home/jacob/github/haskell-web-server/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/share/x86_64-linux-ghc-8.0.2/haskell-web-server-0.1.0.0"
-libexecdir = "/home/jacob/github/haskell-web-server/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/libexec"
-sysconfdir = "/home/jacob/github/haskell-web-server/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/etc"
+bindir     = "/home/jacob/go/src/github.com/iced-mocha/facebook-client/haskell-server-in-progress/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/bin"
+libdir     = "/home/jacob/go/src/github.com/iced-mocha/facebook-client/haskell-server-in-progress/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/lib/x86_64-linux-ghc-8.0.2/haskell-web-server-0.1.0.0"
+dynlibdir  = "/home/jacob/go/src/github.com/iced-mocha/facebook-client/haskell-server-in-progress/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/lib/x86_64-linux-ghc-8.0.2"
+datadir    = "/home/jacob/go/src/github.com/iced-mocha/facebook-client/haskell-server-in-progress/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/share/x86_64-linux-ghc-8.0.2/haskell-web-server-0.1.0.0"
+libexecdir = "/home/jacob/go/src/github.com/iced-mocha/facebook-client/haskell-server-in-progress/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/libexec"
+sysconfdir = "/home/jacob/go/src/github.com/iced-mocha/facebook-client/haskell-server-in-progress/.stack-work/install/x86_64-linux/lts-9.6/8.0.2/etc"
 
 getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "haskell_web_server_bindir") (\_ -> return bindir)
