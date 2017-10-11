@@ -70,6 +70,13 @@
   (major1) == 0 && (major2) <  11 || \
   (major1) == 0 && (major2) == 11 && (minor) <= 0)
 
+/* package text-1.2.2.2 */
+#define VERSION_text "1.2.2.2"
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  2 || \
+  (major1) == 1 && (major2) == 2 && (minor) <= 2)
+
 /* package unordered-containers-0.2.8.0 */
 #define VERSION_unordered_containers "0.2.8.0"
 #define MIN_VERSION_unordered_containers(major1,major2,minor) (\
