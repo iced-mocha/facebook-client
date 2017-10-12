@@ -1,0 +1,21 @@
+name:                facebook-client
+version:             0.1.0.0
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable facebook-client
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5,
+                       scotty,
+                       aeson,
+                       http-client,
+                       http-conduit,
+                       bytestring,
+                       http-client-tls,
+                       http-types,
+                       mtl,
+                       unordered-containers,
+                       text
