@@ -57,18 +57,24 @@ instance FromJSON FbPosts where
     parseJSON _ = mzero
 
 data FbPost = FbPost
-    { msg :: Maybe String
-    , story :: Maybe String
-    , created_time :: String
-    , fb_id :: String
+    { fb_id :: String
+    , fb_created_time :: String
+    , fb_story :: Maybe String
+    , fb_message :: Maybe String
+    , fb_picture :: Maybe String
+    , fb_caption :: Maybe String
+    , fb_link :: Maybe String
     } deriving (Show, Generic, ToJSON)
 
 instance FromJSON FbPost where
     parseJSON (Object v) =
-        FbPost <$> v .:? "message"
-               <*> v .:? "story"
+        FbPost <$> v .: "id"
                <*> v .: "created_time"
-               <*> v .: "id"
+               <*> v .:? "story"
+               <*> v .:? "message"
+               <*> v .:? "picture"
+               <*> v .:? "caption"
+               <*> v .:? "link"
     parseJSON _ = mzero
 
 data FbPaging = FbPaging
@@ -99,9 +105,8 @@ routes = do
         postsRes <- liftIO(getPosts fb_id fb_token)
         let res = fst postsRes
         let code = snd postsRes
-        status $ mkStatus code (NL8.pack "") -- todo: better way?
+        status $ mkStatus code (NL8.pack "")
         if code == 200
-            -- then json $ parsePosts res
             then json $ makePostsGeneric $ parsePosts res
             else json $ object [ "error" .= (getErrorMessage $ parseError res) ]
 
@@ -115,15 +120,14 @@ makePostsGeneric fbPosts =
 makePostGeneric :: FbPost -> Post
 makePostGeneric fbPost = 
     Post { Main.id = fb_id fbPost
-         , date = created_time fbPost
-         , title = (fromMaybe "" (msg fbPost))
-         , content = (fromMaybe "" (story fbPost))
-         , platform = "Facebook"
          , author = ""
          , profileimg = ""
-         , heroimg = ""
-         , postlink = ""
-         }
+         , date = fb_created_time fbPost
+         , title = (fromMaybe "" (fb_story fbPost))
+         , content = (fromMaybe "" (fb_message fbPost))
+         , heroimg = (fromMaybe "" (fb_picture fbPost))
+         , postlink = (fromMaybe "" (fb_link fbPost))
+         , platform = "Facebook" }
 
 parsePosts :: String -> FbPosts
 parsePosts post = 
@@ -141,7 +145,7 @@ parseError err =
 
 getPosts :: String -> String -> IO (String, Int)
 getPosts fb_id fb_token = do
-    initReq <- parseRequest ("https://graph.facebook.com/" ++ fb_id ++ "/feed")
+    initReq <- parseRequest ("https://graph.facebook.com/" ++ fb_id ++ "/feed?fields=link,message,description,caption,story,created_time,picture")
     let req = initReq 
                 { requestHeaders =
                     [ ("Authorization", NL8.pack ("Bearer " ++ fb_token)) ]
@@ -149,8 +153,6 @@ getPosts fb_id fb_token = do
     response <- httpLBS req
     let code = getResponseStatusCode response
     return (L8.unpack $ getResponseBody response, code)
-
--- putStrLn $ 
 
 main = do
     putStrLn "Starting Server on port 5000"
