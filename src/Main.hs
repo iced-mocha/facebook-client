@@ -117,12 +117,15 @@ makePostsGeneric :: FbPosts -> Posts
 makePostsGeneric fbPosts =
     Posts (Prelude.map makePostGeneric $ fb_posts fbPosts) (Main.next $ paging fbPosts)
 
+trimOffsetFromTime :: String -> String
+trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
+
 makePostGeneric :: FbPost -> Post
 makePostGeneric fbPost = 
     Post { Main.id = fb_id fbPost
          , author = ""
          , profileimg = ""
-         , date = fb_created_time fbPost
+         , date = (trimOffsetFromTime $ fb_created_time fbPost) ++ "Z"
          , title = (fromMaybe "" (fb_story fbPost))
          , content = (fromMaybe "" (fb_message fbPost))
          , heroimg = (fromMaybe "" (fb_picture fbPost))
