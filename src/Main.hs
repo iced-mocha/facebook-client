@@ -26,6 +26,8 @@ import Network.HTTP.Types.Status
 import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.ByteString.Char8 as NL8
 
+facebookPlatform = "facebook"
+
 data User = User { userId :: Int, userName :: String } deriving (Generic, Show)
 
 data Posts = Posts
@@ -130,7 +132,7 @@ makePostGeneric fbPost =
          , content = (fromMaybe "" (fb_message fbPost))
          , heroimg = (fromMaybe "" (fb_picture fbPost))
          , postlink = (fromMaybe "" (fb_link fbPost))
-         , platform = "Facebook" }
+         , platform = facebookPlatform }
 
 parsePosts :: String -> FbPosts
 parsePosts post = 
