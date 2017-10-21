@@ -58,6 +58,8 @@ instance FromJSON FbPosts where
                 <*> v .: "paging"
     parseJSON _ = mzero
 
+fb_fields = "link,message,description,caption,story,created_time,picture"
+
 data FbPost = FbPost
     { fb_id :: String
     , fb_created_time :: String
@@ -98,7 +100,6 @@ bob = User { userId = 1, userName = "bob" }
 jenny :: User
 jenny = User { userId = 2, userName = "jenny" }
 
--- TODO: If there is an HttpException, like a timeout, it will not be caught!!
 routes :: ScottyM ()
 routes = do
     get "/v1/posts" $ do
@@ -150,7 +151,7 @@ parseError err =
 
 getPosts :: String -> String -> IO (String, Int)
 getPosts fb_id fb_token = do
-    initReq <- parseRequest ("https://graph.facebook.com/" ++ fb_id ++ "/feed?fields=link,message,description,caption,story,created_time,picture")
+    initReq <- parseRequest ("https://graph.facebook.com/" ++ fb_id ++ "/feed?fields=" ++ fb_fields)
     let req = initReq 
                 { requestHeaders =
                     [ ("Authorization", NL8.pack ("Bearer " ++ fb_token)) ]
