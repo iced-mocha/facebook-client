@@ -48,7 +48,7 @@ data Post = Post
     } deriving (Show, Generic, ToJSON, FromJSON)
 
 data FbPosts = FbPosts
-    { fb_posts :: [FbPost]
+    { fbPosts :: [FbPost]
     , paging :: FbPaging
     } deriving (Show, Generic, ToJSON)
 
@@ -58,16 +58,16 @@ instance FromJSON FbPosts where
                 <*> v .: "paging"
     parseJSON _ = mzero
 
-fb_fields = "link,message,description,caption,story,created_time,picture"
+fbFields = "link,message,description,caption,story,created_time,picture"
 
 data FbPost = FbPost
-    { fb_id :: String
-    , fb_created_time :: String
-    , fb_story :: Maybe String
-    , fb_message :: Maybe String
-    , fb_picture :: Maybe String
-    , fb_caption :: Maybe String
-    , fb_link :: Maybe String
+    { fbId :: String
+    , fbCreatedTime :: String
+    , fbStory :: Maybe String
+    , fbMessage :: Maybe String
+    , fbPicture :: Maybe String
+    , fbCaption :: Maybe String
+    , fbLink :: Maybe String
     } deriving (Show, Generic, ToJSON)
 
 instance FromJSON FbPost where
@@ -103,9 +103,9 @@ jenny = User { userId = 2, userName = "jenny" }
 routes :: ScottyM ()
 routes = do
     get "/v1/posts" $ do
-        fb_id <- param "fb_id"
-        fb_token <- param "fb_token"
-        postsRes <- liftIO(getPosts fb_id fb_token)
+        fbId <- param "fb_id"
+        fbToken <- param "fb_token"
+        postsRes <- liftIO(getPosts fbId fbToken)
         let res = fst postsRes
         let code = snd postsRes
         status $ mkStatus code (NL8.pack "")
@@ -117,22 +117,22 @@ getErrorMessage :: FbError -> String
 getErrorMessage FbError{Main.error=err} = message err
 
 makePostsGeneric :: FbPosts -> Posts
-makePostsGeneric fbPosts =
-    Posts (Prelude.map makePostGeneric $ fb_posts fbPosts) (Main.next $ paging fbPosts)
+makePostsGeneric posts =
+    Posts (Prelude.map makePostGeneric $ fbPosts posts) (Main.next $ paging posts)
 
 trimOffsetFromTime :: String -> String
 trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
 
 makePostGeneric :: FbPost -> Post
 makePostGeneric fbPost = 
-    Post { Main.id = fb_id fbPost
+    Post { Main.id = fbId fbPost
          , author = ""
          , profileimg = ""
-         , date = (trimOffsetFromTime $ fb_created_time fbPost) ++ "Z"
-         , title = (fromMaybe "" (fb_story fbPost))
-         , content = (fromMaybe "" (fb_message fbPost))
-         , heroimg = (fromMaybe "" (fb_picture fbPost))
-         , postlink = (fromMaybe "" (fb_link fbPost))
+         , date = (trimOffsetFromTime $ fbCreatedTime fbPost) ++ "Z"
+         , title = (fromMaybe "" (fbStory fbPost))
+         , content = (fromMaybe "" (fbMessage fbPost))
+         , heroimg = (fromMaybe "" (fbPicture fbPost))
+         , postlink = (fromMaybe "" (fbLink fbPost))
          , platform = facebookPlatform }
 
 parsePosts :: String -> FbPosts
@@ -150,11 +150,11 @@ parseError err =
             else FbError $ FbErrorContent  ""
 
 getPosts :: String -> String -> IO (String, Int)
-getPosts fb_id fb_token = do
-    initReq <- parseRequest ("https://graph.facebook.com/" ++ fb_id ++ "/feed?fields=" ++ fb_fields)
+getPosts fbId fbToken = do
+    initReq <- parseRequest ("https://graph.facebook.com/" ++ fbId ++ "/feed?fields=" ++ fbFields)
     let req = initReq 
                 { requestHeaders =
-                    [ ("Authorization", NL8.pack ("Bearer " ++ fb_token)) ]
+                    [ ("Authorization", NL8.pack ("Bearer " ++ fbToken)) ]
                 }
     response <- httpLBS req
     let code = getResponseStatusCode response
