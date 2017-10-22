@@ -58,7 +58,7 @@ instance FromJSON FbPosts where
                 <*> v .: "paging"
     parseJSON _ = mzero
 
-fbFields = "link,message,description,caption,story,created_time,picture"
+fbFields = "link,message,description,caption,story,created_time,picture,from"
 
 data FbPost = FbPost
     { fbId :: String
@@ -67,6 +67,7 @@ data FbPost = FbPost
     , fbMessage :: Maybe String
     , fbPicture :: Maybe String
     , fbCaption :: Maybe String
+    , fbFrom :: FbFrom
     , fbLink :: Maybe String
     } deriving (Show, Generic, ToJSON)
 
@@ -78,7 +79,19 @@ instance FromJSON FbPost where
                <*> v .:? "message"
                <*> v .:? "picture"
                <*> v .:? "caption"
+               <*> v .: "from"
                <*> v .:? "link"
+    parseJSON _ = mzero
+
+data FbFrom = FbFrom
+    { fromName :: String
+    , fromId :: String
+    } deriving (Show, Generic, ToJSON)
+
+instance FromJSON FbFrom where
+    parseJSON (Object v) =
+        FbFrom <$> v .: "name"
+               <*> v .: "id"
     parseJSON _ = mzero
 
 data FbPaging = FbPaging
@@ -126,12 +139,12 @@ trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
 makePostGeneric :: FbPost -> Post
 makePostGeneric fbPost = 
     Post { Main.id = fbId fbPost
-         , author = ""
          , profileimg = ""
          , date = (trimOffsetFromTime $ fbCreatedTime fbPost) ++ "Z"
          , title = (fromMaybe "" (fbStory fbPost))
          , content = (fromMaybe "" (fbMessage fbPost))
          , heroimg = (fromMaybe "" (fbPicture fbPost))
+         , author = (fromName (fbFrom fbPost))
          , postlink = (fromMaybe "" (fbLink fbPost))
          , platform = facebookPlatform }
 
