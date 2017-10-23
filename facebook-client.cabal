@@ -18,4 +18,5 @@ executable facebook-client
                        http-types,
                        mtl,
                        unordered-containers,
-                       text
+                       text,
+                       async

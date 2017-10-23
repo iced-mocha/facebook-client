@@ -18,6 +18,7 @@ import GHC.Generics
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.List
+import Control.Concurrent.Async
 import Network.HTTP.Simple
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
@@ -148,8 +149,18 @@ trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
 updatePostsImages :: String -> FbPosts -> IO(FbPosts)
 updatePostsImages fbToken fbPostsWrap = do
     let posts = fbPosts fbPostsWrap
-    updatedPosts <- mapM (updatePostImage fbToken) posts
+    updatedPostsAsync <- mapM (updatePostImageAsync fbToken) posts
+    updatedPosts <- mapM wait updatedPostsAsync
     return fbPostsWrap { fbPosts = updatedPosts }
+
+updatePostImageAsync :: String -> FbPost -> IO (Async FbPost)
+updatePostImageAsync fbToken fbPost = do
+    async (if (fbType fbPost) == "photo"
+               then do let id = (fromMaybe "" (fbObjectID fbPost))
+                       photo <- getFbPhoto id fbToken
+                       let updatedFbPost = fbPost { fbPicture = (Just photo) }
+                       return updatedFbPost
+               else return fbPost)
 
 updatePostImage :: String -> FbPost -> IO (FbPost)
 updatePostImage fbToken fbPost = do
