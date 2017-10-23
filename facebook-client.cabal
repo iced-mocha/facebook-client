@@ -19,4 +19,7 @@ executable facebook-client
                        mtl,
                        unordered-containers,
                        text,
-                       async
+                       async,
+                       pooled-io,
+                       deepseq,
+                       spawn
