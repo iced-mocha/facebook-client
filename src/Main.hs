@@ -35,7 +35,8 @@ facebookPlatform = "facebook"
 
 data Posts = Posts
     { posts :: [Post]
-    , nexturl :: String
+    , paging_token :: String
+    , until :: String
     } deriving (Show, Generic, ToJSON, FromJSON)
 
 data Post = Post
@@ -129,7 +130,16 @@ routes = do
     get "/v1/posts" $ do
         fbId <- param "fb_id"
         fbToken <- param "fb_token"
-        postsRes <- liftIO(getPosts fbId fbToken)
+        pagingToken <- param "paging_token" `rescue` (\x -> return "")
+        until <- param "until" `rescue` (\x -> return "")
+        let baseUrl = "https://graph.facebook.com/" ++ fbId ++ "/feed?fields=" ++ fbFields
+        let u = if pagingToken == ""
+                    then baseUrl
+                    else (baseUrl ++ "&__paging_token=" ++ pagingToken)
+        let url = if until == ""
+                      then u
+                      else u ++ "&until=" ++ until
+        postsRes <- liftIO(getPosts fbId fbToken url)
         let res = fst postsRes
         let code = snd postsRes
         let parsedPosts = (parsePosts res)
@@ -142,9 +152,26 @@ routes = do
 getErrorMessage :: FbError -> String
 getErrorMessage FbError{Main.error=err} = message err
 
+extractParam :: String -> String -> String
+extractParam "" param = ""
+extractParam xs param
+    | prefix param xs = stripExtraParams (Prelude.drop (Prelude.length param + 1) xs)
+    | otherwise = extractParam (Prelude.tail xs) param
+
+stripExtraParams :: String -> String
+stripExtraParams "" = ""
+stripExtraParams (x:xs)
+    | x == '&' = ""
+    | otherwise = x:(stripExtraParams xs)
+
+prefix :: String -> String -> Bool
+prefix [] ys = True
+prefix (x:xs) [] = False
+prefix (x:xs) (y:ys) = (x == y) && prefix xs ys
+
 makePostsGeneric :: FbPosts -> String -> Posts
 makePostsGeneric posts fbToken =
-    Posts (Prelude.map (makePostGeneric fbToken) (fbPosts posts)) (Main.next $ paging posts)
+    Posts (Prelude.map (makePostGeneric fbToken) (fbPosts posts)) (extractParam (Main.next $ paging posts) "__paging_token") (extractParam (Main.next $ paging posts) "until")
 
 trimOffsetFromTime :: String -> String
 trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
@@ -239,9 +266,9 @@ getPhotos objectId fbToken = do
     let code = getResponseStatusCode response
     return (L8.unpack $ getResponseBody response, code)
 
-getPosts :: String -> String -> IO (String, Int)
-getPosts fbId fbToken = do
-    initReq <- parseRequest ("https://graph.facebook.com/" ++ fbId ++ "/feed?fields=" ++ fbFields)
+getPosts :: String -> String -> String -> IO (String, Int)
+getPosts fbId fbToken url = do
+    initReq <- parseRequest url
     let req = initReq 
                 { requestHeaders =
                     [ ("Authorization", NL8.pack ("Bearer " ++ fbToken)) ]
