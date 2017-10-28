@@ -22,4 +22,5 @@ executable facebook-client
                        async,
                        pooled-io,
                        deepseq,
-                       spawn
+                       spawn,
+                       hjsonpointer
