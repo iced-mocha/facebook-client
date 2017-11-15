@@ -35,8 +35,7 @@ facebookPlatform = "facebook"
 
 data Posts = Posts
     { posts :: [Post]
-    , paging_token :: String
-    , until :: String
+    , nextUrl :: String
     } deriving (Show, Generic, ToJSON, FromJSON)
 
 data Post = Post
@@ -146,7 +145,7 @@ routes = do
         postsWithImages <- liftIO(updatePostsImages fbToken parsedPosts)
         status $ mkStatus code (NL8.pack "")
         if code == 200
-            then json $ makePostsGeneric postsWithImages fbToken
+            then json $ makePostsGeneric postsWithImages fbId fbToken
             else json $ object [ "error" .= (getErrorMessage $ parseError res) ]
 
 getErrorMessage :: FbError -> String
@@ -169,9 +168,17 @@ prefix [] ys = True
 prefix (x:xs) [] = False
 prefix (x:xs) (y:ys) = (x == y) && prefix xs ys
 
-makePostsGeneric :: FbPosts -> String -> Posts
-makePostsGeneric posts fbToken =
-    Posts (Prelude.map (makePostGeneric fbToken) (fbPosts posts)) (extractParam (Main.next $ paging posts) "__paging_token") (extractParam (Main.next $ paging posts) "until")
+getNextURL :: String -> String -> String -> String -> String
+getNextURL fbId fbToken pagingToken until
+    | pagingToken == "" = ""
+    | otherwise = "http://facebook-client:5000/v1/posts?fb_id=" ++ fbId ++
+                  "&fb_token=" ++ fbToken ++
+                  "&paging_token=" ++ pagingToken ++
+                  "&until=" ++ until
+
+makePostsGeneric :: FbPosts -> String -> String -> Posts
+makePostsGeneric posts fbId fbToken =
+    Posts (Prelude.map (makePostGeneric fbToken) (fbPosts posts)) (getNextURL fbId fbToken (extractParam (Main.next $ paging posts) "__paging_token") (extractParam (Main.next $ paging posts) "until"))
 
 trimOffsetFromTime :: String -> String
 trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
