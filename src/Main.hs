@@ -127,25 +127,24 @@ data FbImage = FbImage
 routes :: ScottyM ()
 routes = do
     get "/v1/posts" $ do
-        fbId <- param "fb_id"
         fbToken <- param "fb_token"
         pagingToken <- param "paging_token" `rescue` (\x -> return "")
         until <- param "until" `rescue` (\x -> return "")
-        let baseUrl = "https://graph.facebook.com/" ++ fbId ++ "/feed?fields=" ++ fbFields
+        let baseUrl = "https://graph.facebook.com/me/feed?fields=" ++ fbFields
         let u = if pagingToken == ""
                     then baseUrl
                     else (baseUrl ++ "&__paging_token=" ++ pagingToken)
         let url = if until == ""
                       then u
                       else u ++ "&until=" ++ until
-        postsRes <- liftIO(getPosts fbId fbToken url)
+        postsRes <- liftIO(getPosts fbToken url)
         let res = fst postsRes
         let code = snd postsRes
         let parsedPosts = (parsePosts res)
         postsWithImages <- liftIO(updatePostsImages fbToken parsedPosts)
         status $ mkStatus code (NL8.pack "")
         if code == 200
-            then json $ makePostsGeneric postsWithImages fbId fbToken
+            then json $ makePostsGeneric postsWithImages fbToken
             else json $ object [ "error" .= (getErrorMessage $ parseError res) ]
 
 getErrorMessage :: FbError -> String
@@ -168,17 +167,16 @@ prefix [] ys = True
 prefix (x:xs) [] = False
 prefix (x:xs) (y:ys) = (x == y) && prefix xs ys
 
-getNextURL :: String -> String -> String -> String -> String
-getNextURL fbId fbToken pagingToken until
+getNextURL :: String -> String -> String -> String
+getNextURL fbToken pagingToken until
     | pagingToken == "" = ""
-    | otherwise = "http://facebook-client:5000/v1/posts?fb_id=" ++ fbId ++
-                  "&fb_token=" ++ fbToken ++
+    | otherwise = "http://facebook-client:5000/v1/posts?fb_token=" ++ fbToken ++
                   "&paging_token=" ++ pagingToken ++
                   "&until=" ++ until
 
-makePostsGeneric :: FbPosts -> String -> String -> Posts
-makePostsGeneric posts fbId fbToken =
-    Posts (Prelude.map (makePostGeneric fbToken) (fbPosts posts)) (getNextURL fbId fbToken (extractParam (Main.next $ paging posts) "__paging_token") (extractParam (Main.next $ paging posts) "until"))
+makePostsGeneric :: FbPosts -> String -> Posts
+makePostsGeneric posts fbToken =
+    Posts (Prelude.map (makePostGeneric fbToken) (fbPosts posts)) (getNextURL fbToken (extractParam (Main.next $ paging posts) "__paging_token") (extractParam (Main.next $ paging posts) "until"))
 
 trimOffsetFromTime :: String -> String
 trimOffsetFromTime time = Prelude.take (Prelude.length time - 5) time
@@ -273,8 +271,8 @@ getPhotos objectId fbToken = do
     let code = getResponseStatusCode response
     return (L8.unpack $ getResponseBody response, code)
 
-getPosts :: String -> String -> String -> IO (String, Int)
-getPosts fbId fbToken url = do
+getPosts :: String -> String -> IO (String, Int)
+getPosts fbToken url = do
     initReq <- parseRequest url
     let req = initReq 
                 { requestHeaders =
